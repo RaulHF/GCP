@@ -90,7 +90,7 @@ try:
 
     while True:
         h, t = Adafruit_DHT.read_retry(22, DHT_SENSOR_PIN)
-#        t = t * 9.0/5 + 32
+        t = t * 9.0/5 + 32
 
         h = "{:.3f}".format(h)
         t = "{:.3f}".format(t)
@@ -100,7 +100,7 @@ try:
         sys.stdout.flush()
 
         message = MakeMessage(
-            device_id, 'event', 'temperature : {}, humidity : {}'.format(t, h))
+            device_id, 'event', 'temperature={}, humidity={}'.format(t, h))
 
         SendCommand(client_sock, message, False)
         time.sleep(2)
