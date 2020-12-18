@@ -66,9 +66,10 @@ def SendCommand(sock, message, log=True):
 print('Bring up device 1')
 
 
+#def MakeMessage(device_id, action, data=''):
 def MakeMessage(device_id, action, data=''):
     if data:
-        return '{{ "device" : "{}", "action":"{}", "data" : "{}" }}'.format(
+        return '{{ "device" : "{}", "action" : "{}", "data" : "{}" }}'.format(
             device_id, action, data)
     else:
         return '{{ "device" : "{}", "action":"{}" }}'.format(device_id, action)
@@ -90,7 +91,6 @@ try:
 
     while True:
         h, t = Adafruit_DHT.read_retry(22, DHT_SENSOR_PIN)
-#        t = t * 9.0/5 + 32
 
         h = "{:.3f}".format(h)
         t = "{:.3f}".format(t)
@@ -98,9 +98,10 @@ try:
             '\r >>' + bcolors.CGREEN + bcolors.BOLD +
             'Temp: {}, Hum: {}'.format(t, h) + bcolors.ENDC + ' <<')
         sys.stdout.flush()
-
-        message = MakeMessage(
-            device_id, 'event', 'temperature : {}, humidity : {}'.format(t, h))
+        data = {"temperature" : t, "humidity" : h} 
+        message = MakeMessage( device_id, 'event', data)
+            #device_id, 'event','temperature : {} , humidity : {}'.format(t,h))
+            #device_id, 'event', tempData)
 
         SendCommand(client_sock, message, False)
         time.sleep(2)
