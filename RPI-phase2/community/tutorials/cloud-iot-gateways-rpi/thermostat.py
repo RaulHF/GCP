@@ -23,9 +23,11 @@ import os
 
 import Adafruit_DHT
 from colors import bcolors
+import serial
+import json
 
 DHT_SENSOR_PIN = 4
-
+ser = serial.Serial('/dev/ttyUSB0', 115200)
 #ADDR = '192.168.1.100'
 gw = os.popen("ip -4 route show default").read().split()
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -67,6 +69,7 @@ print('Bring up device 1')
 
 
 #def MakeMessage(device_id, action, data=''):
+
 def MakeMessage(device_id, action, data=''):
     if data:
         return '{{ "device" : "{}", "action" : "{}", "data" : "{}" }}'.format(
@@ -83,6 +86,14 @@ def RunAction(action):
     event_response = SendCommand(client_sock, message)
     print('Response {}'.format(event_response))
 
+def serialRead():
+    readText = ser.readline()
+    try:
+        string = json.loads(readText)
+    except:
+        string = {"RTC":'Nan', "O2" : 'Nan'}
+    return string 
+
 
 try:
     random.seed()
@@ -90,23 +101,22 @@ try:
     RunAction('attach')
 
     while True:
+        UCBString = serialRead()
         h, t = Adafruit_DHT.read_retry(22, DHT_SENSOR_PIN)
-
         h = "{:.3f}".format(h)
         t = "{:.3f}".format(t)
         sys.stdout.write(
             '\r >>' + bcolors.CGREEN + bcolors.BOLD +
-            'Temp: {}, Hum: {}'.format(t, h) + bcolors.ENDC + ' <<')
+            'Temp: {}, Hum: {}, RTC: {}, O2: {}'.format(t, h, UCBString["RTC"], UCBString["O2"]) + bcolors.ENDC + ' <<')
         sys.stdout.flush()
-        data = {"temperature" : t, "humidity" : h} 
+        data = {"temperature" : t, "humidity" : h , "RTC" : UCBString["RTC"], "O2" : UCBString["O2"]}
         message = MakeMessage( device_id, 'event', data)
-            #device_id, 'event','temperature : {} , humidity : {}'.format(t,h))
-            #device_id, 'event', tempData)
 
         SendCommand(client_sock, message, False)
-        time.sleep(2)
+        #time.sleep(2)
 
 
 finally:
     print('closing socket', file=sys.stderr)
     client_sock.close()
+
